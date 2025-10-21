@@ -5,7 +5,7 @@ on:
     - cron: '0 22,10 * * *'
   workflow_dispatch:
     branches:
-      - master
+      - main
       - dev
       - gd
 jobs:
@@ -17,9 +17,10 @@ jobs:
     steps:
       - name: Set branch name
         id: vars
-        run: echo "BRANCH_NAME=${{ github.repository_owner == 'Guovin' && 'gd' || 'master' }}" >> $GITHUB_ENV
+        run: echo "BRANCH_NAME=${{ github.repository_owner == 'Guovin' && 'gd' || 'main' }}" >> $GITHUB_ENV
       - uses: actions/checkout@v3
         with:
+          fetch-depth: 0
           ref: ${{ env.BRANCH_NAME }}
       - name: Run with setup-python 3.13
         uses: actions/setup-python@v4
@@ -60,8 +61,29 @@ jobs:
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
-          git add .
-          if ! git diff --staged --quiet; then
-            git commit -m "Github Action Auto Updated"
-            git push --force
-          fi
+          git reset --soft $(git rev-list --max-parents=0 HEAD)
+          git reset HEAD -- .
+          git add -- README.md output/
+          git commit -m "Github Action Auto Updated"
+          git push origin HEAD:master --force
+
+      - name: Mirror the Github organization repos to Gitee.
+        run: |
+          echo "${{ secrets.GITEE_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          echo "Host gitee.com
+            HostName gitee.com
+            IdentityFile ~/.ssh/id_rsa
+            User git" > ~/.ssh/config
+          git remote add gitee https://gitee.com/mytv-android/iptv-api.git
+          git push gitee HEAD:master --force
+        # uses: Yikun/hub-mirror-action@master
+        # with:
+        #   src: 'github/mytv-android'    			
+        #   dst: 'gitee/mytv-android'   
+        #   dst_key: ${{ secrets.GITEE_PRIVATE_KEY }}  
+        #   dst_token:  ${{ secrets.GITEE_TOKEN }}  
+        #   force_update: true
+        #   static_list: "iptv-api"
+        #   account_type: org   		
+        #   debug: true

@@ -348,7 +348,7 @@ def convert_to_m3u(path=None, first_channel_name=None, data=None):
     """
     if os.path.exists(path):
         with open(path, "r", encoding="utf-8") as file:
-            m3u_output = f'#EXTM3U x-tvg-url="{get_epg_url()}"\n'
+            m3u_output = f'#EXTM3U x-tvg-url="https://gitee.com/mytv-android/myepg/raw/master/output/epg.gz"\n'#"{get_epg_url()}"\n'
             current_group = None
             logo_url = join_url(config.cdn_url,
                                 config.logo_url) if "raw.githubusercontent.com" in config.logo_url else config.logo_url
